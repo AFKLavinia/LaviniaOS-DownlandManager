@@ -4,76 +4,84 @@ import { formatSpeed } from "../../lib/formatters";
 
 interface TitlebarProps {
   totalSpeed: number;
+  theme: "amoled" | "light";
+  onToggleTheme: () => void;
   onOpenSettings: () => void;
 }
 
 export const Titlebar: React.FC<TitlebarProps> = ({
   totalSpeed,
+  theme,
+  onToggleTheme,
   onOpenSettings,
 }) => {
   const [isMaximized, setIsMaximized] = useState(false);
 
-  const getTauriWindow = async () => {
-    try {
-      const { getCurrentWindow } = await import("@tauri-apps/api/window");
-      return getCurrentWindow();
-    } catch {
-      return null;
-    }
-  };
-
   const handleMinimize = async () => {
-    const win = await getTauriWindow();
-    if (win) {
-      await win.minimize();
+    try {
+      const { invoke } = await import("@tauri-apps/api/core");
+      await invoke("win_minimize");
+    } catch {
+      // Browser fallback
     }
   };
 
   const handleMaximize = async () => {
-    const win = await getTauriWindow();
-    if (win) {
-      await win.toggleMaximize();
+    try {
+      const { invoke } = await import("@tauri-apps/api/core");
+      await invoke("win_maximize");
       setIsMaximized(!isMaximized);
+    } catch {
+      // Browser fallback
     }
   };
 
   const handleClose = async () => {
-    const win = await getTauriWindow();
-    if (win) {
-      await win.close();
-    } else {
+    try {
+      const { invoke } = await import("@tauri-apps/api/core");
+      await invoke("win_close");
+    } catch {
       window.close();
     }
   };
 
   return (
     <header className="custom-titlebar" data-tauri-drag-region>
-      {/* Left: LODM Brand Tag (No folder icon, clean typography) */}
+      {/* Left: LODM Brand Tag (No folder, pure monochrome AMOLED/Light) */}
       <div className="titlebar-left" data-tauri-drag-region>
         <span className="lodm-logo-badge">LODM</span>
         <span className="titlebar-divider">/</span>
         <span className="titlebar-title">LaviniaOS Download Manager</span>
       </div>
 
-      {/* Center: Draggable area */}
+      {/* Center: Draggable area & Speed */}
       <div className="titlebar-center" data-tauri-drag-region>
         <div className="stat-chip no-drag">
-          <SpeedIcon size={14} strokeWidth={2} />
-          <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>Hız:</span>
-          <strong style={{ fontFamily: "var(--font-mono)", fontSize: "11px", color: "var(--accent-sky)" }}>
+          <SpeedIcon size={12} strokeWidth={2} />
+          <span style={{ fontSize: "10px", color: "var(--text-muted)" }}>Hız:</span>
+          <strong style={{ fontFamily: "var(--font-mono)", fontSize: "10px", color: "var(--text-primary)" }}>
             {formatSpeed(totalSpeed)}
           </strong>
         </div>
       </div>
 
-      {/* Right: Window Controls */}
+      {/* Right: Theme switcher, settings & native window controls */}
       <div className="titlebar-right no-drag">
+        {/* Clean Theme Toggle Button (AMOLED / ACIK) */}
+        <button
+          className="theme-toggle-btn"
+          onClick={onToggleTheme}
+          title={`Temayı Değiştir (Şu an: ${theme === "amoled" ? "AMOLED" : "Açık"})`}
+        >
+          {theme === "amoled" ? "AMOLED" : "AÇIK"}
+        </button>
+
         <button
           className="titlebar-btn"
           onClick={onOpenSettings}
           title="Ayarlar"
         >
-          <SettingsIcon size={14} strokeWidth={2} />
+          <SettingsIcon size={13} strokeWidth={2} />
         </button>
 
         <div className="window-controls">
@@ -92,8 +100,8 @@ export const Titlebar: React.FC<TitlebarProps> = ({
             onClick={handleMaximize}
             title={isMaximized ? "Geri Yükle" : "Ekranı Kapla"}
           >
-            <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1">
-              <rect x="0.5" y="0.5" width="9" height="9" />
+            <svg width="9" height="9" viewBox="0 0 9 9" fill="none" stroke="currentColor" strokeWidth="1">
+              <rect x="0.5" y="0.5" width="8" height="8" />
             </svg>
           </button>
 

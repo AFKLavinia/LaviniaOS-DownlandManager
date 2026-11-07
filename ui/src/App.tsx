@@ -15,6 +15,12 @@ export const App: React.FC = () => {
   const [filter, setFilter] = useState<FilterCategory>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [theme, setTheme] = useState<"amoled" | "light">("amoled");
+
+  // Sync theme with document root attribute
+  useEffect(() => {
+    document.documentElement.setAttribute("data-theme", theme);
+  }, [theme]);
 
   // Helper to detect if running under Tauri
   const isTauri = () => typeof window !== "undefined" && ("__TAURI_INTERNALS__" in window || "__TAURI__" in window);
@@ -156,7 +162,12 @@ export const App: React.FC = () => {
 
   return (
     <div className="app-container">
-      <Titlebar totalSpeed={totalSpeed} onOpenSettings={() => {}} />
+      <Titlebar
+        totalSpeed={totalSpeed}
+        theme={theme}
+        onToggleTheme={() => setTheme((t) => (t === "amoled" ? "light" : "amoled"))}
+        onOpenSettings={() => {}}
+      />
 
       <Toolbar
         onAddNew={() => setIsModalOpen(true)}

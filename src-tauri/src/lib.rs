@@ -48,6 +48,27 @@ async fn resume_download(api: State<'_, Arc<DownloadManagerApi>>, id: String) ->
     }
 }
 
+#[tauri::command]
+fn win_minimize(window: tauri::Window) {
+    let _ = window.minimize();
+}
+
+#[tauri::command]
+fn win_maximize(window: tauri::Window) {
+    if let Ok(is_max) = window.is_maximized() {
+        if is_max {
+            let _ = window.unmaximize();
+        } else {
+            let _ = window.maximize();
+        }
+    }
+}
+
+#[tauri::command]
+fn win_close(window: tauri::Window) {
+    let _ = window.close();
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let api = Arc::new(DownloadManagerApi::new());
@@ -58,7 +79,10 @@ pub fn run() {
             get_downloads,
             add_download,
             pause_download,
-            resume_download
+            resume_download,
+            win_minimize,
+            win_maximize,
+            win_close
         ])
         .run(tauri::generate_context!())
         .expect("error while running LODM tauri application");

@@ -43,9 +43,9 @@
   letter-spacing: 0.5px;
   padding: 1px 5px;
   border-radius: var(--radius-sm);
-  background-color: var(--accent-sky-bg);
-  border: 1px solid var(--accent-sky-border);
-  color: var(--accent-sky);
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-primary);
 }
 
 .titlebar-divider {
@@ -71,6 +71,27 @@
   display: flex;
   align-items: center;
   height: 100%;
+}
+
+.theme-toggle-btn {
+  background: transparent;
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  margin-right: 6px;
+  transition: all 0.15s ease;
+}
+
+.theme-toggle-btn:hover {
+  background-color: var(--bg-surface-hover);
+  color: var(--text-primary);
+  border-color: var(--border-focus);
 }
 
 .titlebar-btn {
@@ -209,15 +230,15 @@
 }
 
 .btn-primary {
-  background-color: var(--accent-sky-bg);
-  border-color: var(--accent-sky-border);
-  color: var(--accent-sky);
+  background-color: var(--btn-primary-bg);
+  border-color: var(--btn-primary-border);
+  color: var(--btn-primary-text);
 }
 
 .btn-primary:hover:not(:disabled) {
-  background-color: rgba(56, 189, 248, 0.16);
-  border-color: rgba(56, 189, 248, 0.4);
-  color: #fff;
+  background-color: var(--btn-primary-hover);
+  border-color: var(--btn-primary-border);
+  color: var(--btn-primary-text);
 }
 
 .btn:disabled {
@@ -264,8 +285,8 @@
 
 .sidebar-item.active {
   background-color: var(--bg-surface-hover);
-  color: var(--accent-sky);
-  font-weight: 500;
+  color: var(--text-primary);
+  font-weight: 600;
 }
 
 .sidebar-counter {
@@ -342,27 +363,27 @@
 }
 
 .status-pill.downloading {
-  background-color: var(--accent-sky-bg);
-  border-color: var(--accent-sky-border);
-  color: var(--accent-sky);
+  background-color: var(--badge-active-bg);
+  border-color: var(--badge-active-border);
+  color: var(--badge-active-text);
 }
 
 .status-pill.completed {
-  background-color: var(--accent-emerald-bg);
-  border-color: var(--accent-emerald-border);
-  color: var(--accent-emerald);
+  background-color: var(--badge-completed-bg);
+  border-color: var(--badge-completed-border);
+  color: var(--badge-completed-text);
 }
 
 .status-pill.paused {
-  background-color: var(--accent-amber-bg);
-  border-color: var(--accent-amber-border);
-  color: var(--accent-amber);
+  background-color: var(--badge-paused-bg);
+  border-color: var(--badge-paused-border);
+  color: var(--badge-paused-text);
 }
 
 .status-pill.failed {
-  background-color: var(--accent-rose-bg);
-  border-color: var(--accent-rose-border);
-  color: var(--accent-rose);
+  background-color: var(--badge-failed-bg);
+  border-color: var(--badge-failed-border);
+  color: var(--badge-failed-text);
 }
 
 .status-pill.queued {
