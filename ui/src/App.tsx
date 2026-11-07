@@ -16,29 +16,39 @@ export const App: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // Poll real-time raw data downloads from the Rust Core Engine every 350ms
+  // Helper to detect if running under Tauri
+  const isTauri = () => typeof window !== "undefined" && ("__TAURI_INTERNALS__" in window || "__TAURI__" in window);
+
+  // Poll real-time raw data downloads every 300ms
   useEffect(() => {
     let isMounted = true;
     const fetchJobs = async () => {
       try {
-        const res = await fetch(`${API_BASE}/api/downloads`);
-        if (res.ok) {
-          const data: DownloadJob[] = await res.json();
-          if (isMounted && Array.isArray(data)) {
-            setJobs(data);
-            if (!selectedId && data.length > 0) {
-              const firstId = typeof data[0].id === "object" ? (data[0].id as any)[0] : data[0].id;
-              setSelectedId(firstId);
-            }
+        let data: DownloadJob[] | null = null;
+        if (isTauri()) {
+          const { invoke } = await import("@tauri-apps/api/core");
+          data = await invoke<DownloadJob[]>("get_downloads");
+        } else {
+          const res = await fetch(`${API_BASE}/api/downloads`);
+          if (res.ok) {
+            data = await res.json();
+          }
+        }
+
+        if (isMounted && Array.isArray(data)) {
+          setJobs(data);
+          if (!selectedId && data.length > 0) {
+            const firstId = typeof data[0].id === "object" ? (data[0].id as any)[0] : data[0].id;
+            setSelectedId(firstId);
           }
         }
       } catch {
-        // Backend connecting
+        // Connecting to core
       }
     };
 
     fetchJobs();
-    const interval = setInterval(fetchJobs, 350);
+    const interval = setInterval(fetchJobs, 300);
     return () => {
       isMounted = false;
       clearInterval(interval);
@@ -77,27 +87,37 @@ export const App: React.FC = () => {
     return id === selectedId;
   }) || null;
 
-  // Actions connecting directly to raw data Rust core
+  // Actions connecting to raw data Rust core via Tauri IPC or Local API
   const handleAddNew = async (url: string, destination: string, threads: number) => {
     try {
-      await fetch(`${API_BASE}/api/downloads`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url, destination, threads }),
-      });
+      if (isTauri()) {
+        const { invoke } = await import("@tauri-apps/api/core");
+        await invoke("add_download", { url, destination, threads });
+      } else {
+        await fetch(`${API_BASE}/api/downloads`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ url, destination, threads }),
+        });
+      }
     } catch (e) {
-      console.error("Failed to add download to Rust core:", e);
+      console.error("Failed to add download:", e);
     }
   };
 
   const handlePause = async () => {
     if (!selectedId) return;
     try {
-      await fetch(`${API_BASE}/api/downloads/pause`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: selectedId }),
-      });
+      if (isTauri()) {
+        const { invoke } = await import("@tauri-apps/api/core");
+        await invoke("pause_download", { id: selectedId });
+      } else {
+        await fetch(`${API_BASE}/api/downloads/pause`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id: selectedId }),
+        });
+      }
     } catch (e) {
       console.error(e);
     }
@@ -106,11 +126,16 @@ export const App: React.FC = () => {
   const handleResume = async () => {
     if (!selectedId) return;
     try {
-      await fetch(`${API_BASE}/api/downloads/resume`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: selectedId }),
-      });
+      if (isTauri()) {
+        const { invoke } = await import("@tauri-apps/api/core");
+        await invoke("resume_download", { id: selectedId });
+      } else {
+        await fetch(`${API_BASE}/api/downloads/resume`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id: selectedId }),
+        });
+      }
     } catch (e) {
       console.error(e);
     }

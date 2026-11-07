@@ -13,39 +13,50 @@ export const Titlebar: React.FC<TitlebarProps> = ({
 }) => {
   const [isMaximized, setIsMaximized] = useState(false);
 
-  const handleMinimize = () => {
-    // If running in Tauri / Electron or standard window
-    if ((window as any).__TAURI__) {
-      (window as any).__TAURI__.window.getCurrentWindow().minimize();
+  const getTauriWindow = async () => {
+    try {
+      const { getCurrentWindow } = await import("@tauri-apps/api/window");
+      return getCurrentWindow();
+    } catch {
+      return null;
     }
   };
 
-  const handleMaximize = () => {
-    setIsMaximized(!isMaximized);
-    if ((window as any).__TAURI__) {
-      (window as any).__TAURI__.window.getCurrentWindow().toggleMaximize();
+  const handleMinimize = async () => {
+    const win = await getTauriWindow();
+    if (win) {
+      await win.minimize();
     }
   };
 
-  const handleClose = () => {
-    if ((window as any).__TAURI__) {
-      (window as any).__TAURI__.window.getCurrentWindow().close();
+  const handleMaximize = async () => {
+    const win = await getTauriWindow();
+    if (win) {
+      await win.toggleMaximize();
+      setIsMaximized(!isMaximized);
+    }
+  };
+
+  const handleClose = async () => {
+    const win = await getTauriWindow();
+    if (win) {
+      await win.close();
     } else {
       window.close();
     }
   };
 
   return (
-    <header className="custom-titlebar">
+    <header className="custom-titlebar" data-tauri-drag-region>
       {/* Left: LODM Brand Tag (No folder icon, clean typography) */}
-      <div className="titlebar-left">
+      <div className="titlebar-left" data-tauri-drag-region>
         <span className="lodm-logo-badge">LODM</span>
         <span className="titlebar-divider">/</span>
         <span className="titlebar-title">LaviniaOS Download Manager</span>
       </div>
 
       {/* Center: Draggable area */}
-      <div className="titlebar-center">
+      <div className="titlebar-center" data-tauri-drag-region>
         <div className="stat-chip no-drag">
           <SpeedIcon size={14} strokeWidth={2} />
           <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>Hız:</span>
