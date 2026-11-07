@@ -13,15 +13,15 @@
   overflow: hidden;
 }
 
-/* Custom Window Titlebar */
+/* Custom Window Titlebar (Compact IDM Size) */
 .custom-titlebar {
-  height: 38px;
+  height: 28px;
   background-color: var(--bg-secondary);
   border-bottom: 1px solid var(--border-subtle);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 0 0 12px;
+  padding: 0 0 0 10px;
   -webkit-app-region: drag;
   user-select: none;
 }
@@ -33,15 +33,15 @@
 .titlebar-left {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 
 .lodm-logo-badge {
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
-  letter-spacing: 1px;
-  padding: 2px 7px;
+  letter-spacing: 0.5px;
+  padding: 1px 5px;
   border-radius: var(--radius-sm);
   background-color: var(--accent-sky-bg);
   border: 1px solid var(--accent-sky-border);
@@ -50,11 +50,11 @@
 
 .titlebar-divider {
   color: var(--border-subtle);
-  font-size: 12px;
+  font-size: 11px;
 }
 
 .titlebar-title {
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 500;
   color: var(--text-secondary);
   letter-spacing: -0.1px;
@@ -77,8 +77,8 @@
   background: transparent;
   border: none;
   color: var(--text-muted);
-  width: 38px;
-  height: 38px;
+  width: 28px;
+  height: 28px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -101,8 +101,8 @@
   background: transparent;
   border: none;
   color: var(--text-muted);
-  width: 44px;
-  height: 38px;
+  width: 36px;
+  height: 28px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -122,32 +122,32 @@
 
 /* Header */
 .app-header {
-  height: 48px;
+  height: 36px;
   background-color: var(--bg-secondary);
   border-bottom: 1px solid var(--border-subtle);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 16px;
+  padding: 0 12px;
 }
 
 .brand-section {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
 }
 
 .brand-title {
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 600;
   letter-spacing: -0.2px;
   color: var(--text-primary);
 }
 
 .brand-badge {
-  font-size: 10px;
+  font-size: 9px;
   font-family: var(--font-mono);
-  padding: 2px 6px;
+  padding: 1px 4px;
   background-color: var(--bg-surface);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-sm);
@@ -157,44 +157,44 @@
 .header-stats {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
 }
 
 .stat-chip {
   display: flex;
   align-items: center;
-  gap: 6px;
-  font-size: 12px;
+  gap: 4px;
+  font-size: 11px;
   color: var(--text-secondary);
 }
 
 /* Toolbar */
 .app-toolbar {
-  height: 40px;
+  height: 30px;
   background-color: var(--bg-surface);
   border-bottom: 1px solid var(--border-subtle);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 16px;
-  gap: 8px;
+  padding: 0 10px;
+  gap: 6px;
 }
 
 .toolbar-group {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
 }
 
 /* Subtle Buttons with Flat Icons */
 .btn {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 5px 10px;
-  font-size: 12px;
+  gap: 4px;
+  padding: 3px 7px;
+  font-size: 11px;
   font-weight: 500;
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-sm);
   border: 1px solid var(--border-subtle);
   background-color: var(--bg-surface);
   color: var(--text-secondary);
@@ -227,33 +227,33 @@
 
 /* Sidebar */
 .app-sidebar {
-  width: 200px;
+  width: 125px;
   background-color: var(--bg-secondary);
   border-right: 1px solid var(--border-subtle);
   display: flex;
   flex-direction: column;
-  padding: 12px 8px;
-  gap: 4px;
+  padding: 6px 4px;
+  gap: 2px;
 }
 
 .sidebar-heading {
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 600;
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  padding: 8px 8px 4px 8px;
+  padding: 4px 6px 2px 6px;
 }
 
 .sidebar-item {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 6px 10px;
-  border-radius: var(--radius-md);
+  padding: 4px 6px;
+  border-radius: var(--radius-sm);
   color: var(--text-secondary);
   cursor: pointer;
-  font-size: 12px;
+  font-size: 11px;
   transition: background 0.15s;
 }
 
@@ -269,7 +269,7 @@
 }
 
 .sidebar-counter {
-  font-size: 11px;
+  font-size: 10px;
   font-family: var(--font-mono);
   color: var(--text-muted);
 }
@@ -298,8 +298,8 @@
   position: sticky;
   top: 0;
   background-color: var(--bg-surface);
-  padding: 8px 12px;
-  font-size: 11px;
+  padding: 5px 8px;
+  font-size: 10px;
   font-weight: 600;
   color: var(--text-muted);
   border-bottom: 1px solid var(--border-subtle);
@@ -309,10 +309,10 @@
 }
 
 .download-table td {
-  padding: 8px 12px;
+  padding: 4px 8px;
   border-bottom: 1px solid var(--border-subtle);
   color: var(--text-secondary);
-  font-size: 12px;
+  font-size: 11px;
   vertical-align: middle;
 }
 
@@ -333,10 +333,10 @@
 .status-pill {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  padding: 2px 8px;
+  gap: 4px;
+  padding: 1px 6px;
   border-radius: var(--radius-full);
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 500;
   border: 1px solid transparent;
 }
@@ -375,7 +375,7 @@
 .segment-strip-container {
   position: relative;
   width: 100%;
-  height: 10px;
+  height: 6px;
   background-color: var(--segment-track);
   border-radius: var(--radius-sm);
   overflow: hidden;
@@ -392,7 +392,7 @@
 
 /* Inspector Drawer (Bottom Panel) */
 .inspector-drawer {
-  height: 160px;
+  height: 85px;
   background-color: var(--bg-secondary);
   border-top: 1px solid var(--border-subtle);
   display: flex;
@@ -400,41 +400,41 @@
 }
 
 .inspector-header {
-  padding: 6px 16px;
+  padding: 3px 8px;
   background-color: var(--bg-surface);
   border-bottom: 1px solid var(--border-subtle);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 600;
   color: var(--text-secondary);
 }
 
 .inspector-grid {
   flex: 1;
-  padding: 10px 16px;
+  padding: 4px 8px;
   overflow: auto;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 8px;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 4px;
 }
 
 .segment-card {
   background-color: var(--bg-surface);
   border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
-  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  padding: 4px 6px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
 }
 
 .segment-card-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-size: 11px;
+  font-size: 10px;
   font-family: var(--font-mono);
   color: var(--text-muted);
 }
