@@ -124,6 +124,25 @@ impl DownloadCoordinator {
             worker_handles.push(handle);
         }
 
+        // Background progress syncer to keep job.segments up-to-date in real-time
+        let sync_job_arc = job_arc.clone();
+        let sync_segment_arcs = segment_arcs.clone();
+        let sync_cancel = cancel_token.clone();
+        let syncer_handle = tokio::spawn(async move {
+            while !sync_cancel.load(Ordering::Relaxed) {
+                tokio::time::sleep(tokio::time::Duration::from_millis(150)).await;
+                let mut job = sync_job_arc.lock();
+                if !job.state.is_active() {
+                    break;
+                }
+                for (idx, seg_arc) in sync_segment_arcs.iter().enumerate() {
+                    if idx < job.segments.len() {
+                        job.segments[idx] = seg_arc.lock().clone();
+                    }
+                }
+            }
+        });
+
         // 5. Await all workers and update state
         for handle in worker_handles {
             if let Ok(res) = handle.await {
@@ -136,6 +155,8 @@ impl DownloadCoordinator {
                 }
             }
         }
+
+        syncer_handle.abort();
 
         // Sync segments back from Arc wrappers
         {
