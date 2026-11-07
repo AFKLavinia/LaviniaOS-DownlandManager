@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import type { DownloadJob } from "./lib/eventTypes";
-import { Header } from "./components/layout/Header";
+import { Titlebar } from "./components/layout/Titlebar";
 import { Toolbar } from "./components/layout/Toolbar";
 import { Sidebar, type FilterCategory } from "./components/layout/Sidebar";
 import { DownloadTable } from "./components/downloads/DownloadTable";
@@ -170,7 +170,7 @@ export const App: React.FC = () => {
 
   return (
     <div className="app-container">
-      <Header totalSpeed={totalSpeed} onOpenSettings={() => {}} />
+      <Titlebar totalSpeed={totalSpeed} onOpenSettings={() => {}} />
 
       <Toolbar
         onAddNew={() => setIsModalOpen(true)}
