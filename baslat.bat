@@ -1,41 +1,23 @@
 @echo off
-chcp 65001 >nul
-title LODM - LaviniaOS Download Manager Başlatıcı
+setlocal
+cd /d "%~dp0"
 
 echo ===================================================
-echo   LODM - LaviniaOS Download Manager Başlatılıyor...
+echo   LODM - LaviniaOS Download Manager
 echo ===================================================
 echo.
 
-cd /d "%~dp0"
-
-echo [1/3] Arayüz statik dosyaları derleniyor...
+echo [1/2] Building UI frontend...
 cd ui
 call npm.cmd run build
 if %ERRORLEVEL% NEQ 0 (
-    echo [HATA] Arayüz derlemesi başarısız oldu!
+    echo [ERROR] Frontend build failed!
     pause
-    exit /b %ERRORLEVEL%
+    exit /b 1
 )
 cd ..
 
-echo [2/3] Tauri v2 yerel masaüstü motoru derleniyor...
-cargo build --manifest-path src-tauri\Cargo.toml
-if %ERRORLEVEL% NEQ 0 (
-    echo [HATA] Tauri motoru derlemesi başarısız oldu!
-    pause
-    exit /b %ERRORLEVEL%
-)
+echo [2/2] Launching Tauri v2 Desktop Engine...
+call npx.cmd @tauri-apps/cli dev
 
-echo [3/3] Arayüz sunucusu hazırlanıyor ve LODM masaüstü penceresi açılıyor...
-start /B "" npm.cmd --prefix ui run dev >nul 2>&1
-timeout /t 2 >nul
-
-start "" "target\debug\lodm-app.exe"
-
-echo.
-echo ===================================================
-echo   [BAŞARILI] LODM Masaüstü Uygulaması Açıldı!
-echo ===================================================
-timeout /t 3 >nul
-exit
+endlocal
