@@ -216,3 +216,21 @@ async fn rejects_non_http_urls() {
         .await;
     assert!(r.is_err());
 }
+
+#[tokio::test]
+async fn checksum_mismatch_fails_job() {
+    let data = payload(64 * 1024);
+    let port = spawn_server(data, 0).await;
+    let dir = temp_dir("checksum_bad");
+    let api = DownloadManagerApi::with_config(cfg(&dir, 2)).unwrap();
+
+    let mut nd = NewDownload::simple(format!("http://127.0.0.1:{}/f", port), dir.clone(), 2);
+    nd.expected_checksum = Some("00000000000000000000000000000000".into());
+    api.add(nd).await.unwrap();
+    assert!(wait_state(&api, JobState::Failed, 15).await);
+    assert!(api.list_downloads()[0]
+        .error_message
+        .as_deref()
+        .unwrap_or("")
+        .contains("Checksum"));
+}

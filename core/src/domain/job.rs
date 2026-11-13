@@ -31,6 +31,9 @@ pub struct DownloadJob {
     /// Put the file into a category subfolder (Video, Documents, ...) on first start.
     #[serde(default)]
     pub categorize: bool,
+    /// Optional expected checksum (e.g. "sha256:..." or 64-char hex / 32-char md5).
+    #[serde(default)]
+    pub expected_checksum: Option<String>,
 }
 
 impl DownloadJob {
@@ -60,6 +63,7 @@ impl DownloadJob {
                 .unwrap_or(0),
             name_locked: false,
             categorize: false,
+            expected_checksum: None,
         }
     }
 

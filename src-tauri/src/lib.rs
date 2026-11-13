@@ -48,6 +48,7 @@ struct AddRequest {
     username: Option<String>,
     password: Option<String>,
     paused: bool,
+    checksum: Option<String>,
 }
 
 #[tauri::command]
@@ -76,6 +77,7 @@ async fn add_download(state: Shared<'_>, req: AddRequest) -> Result<String, Stri
     nd.filename = req.filename;
     nd.categorize = categorize;
     nd.paused = req.paused;
+    nd.expected_checksum = req.checksum;
     nd.request = RequestOptions {
         headers: req.headers,
         cookie: req.cookie,
@@ -128,6 +130,14 @@ async fn resume_all(state: Shared<'_>) -> Result<(), String> {
 #[tauri::command]
 fn clear_completed(state: Shared) {
     state.api.clear_completed();
+}
+
+#[tauri::command]
+fn refresh_url(state: Shared, id: String, url: String) -> Result<(), String> {
+    state
+        .api
+        .update_url(parse_id(&id)?, url)
+        .map_err(|e| e.to_string())
 }
 
 fn reveal(path: &std::path::Path, select: bool) -> Result<(), String> {
@@ -445,6 +455,9 @@ fn spawn_snapshot_loop(app: AppHandle, state: Arc<AppState>) {
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
+            show_main_window(app);
+        }))
         .plugin(tauri_plugin_notification::init())
         .setup(|app| {
             let data_dir = app.path().app_data_dir()?;
@@ -523,6 +536,7 @@ pub fn run() {
             pause_all,
             resume_all,
             clear_completed,
+            refresh_url,
             open_file,
             open_folder,
             pick_folder,

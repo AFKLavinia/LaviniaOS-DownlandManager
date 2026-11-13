@@ -40,6 +40,8 @@ pub struct NewDownload {
     pub categorize: bool,
     /// Add to the queue without starting it.
     pub paused: bool,
+    /// Optional expected checksum (SHA-256 or MD5 hex, optionally prefixed with `sha256:` / `md5:`).
+    pub expected_checksum: Option<String>,
 }
 
 impl NewDownload {
@@ -52,6 +54,7 @@ impl NewDownload {
             request: RequestOptions::default(),
             categorize: false,
             paused: false,
+            expected_checksum: None,
         }
     }
 }
@@ -125,6 +128,7 @@ impl DownloadManagerApi {
         job.options = req.request;
         job.name_locked = name_locked;
         job.categorize = req.categorize;
+        job.expected_checksum = req.expected_checksum;
         if req.paused {
             job.state = JobState::Paused;
         }
@@ -355,6 +359,27 @@ impl DownloadManagerApi {
             }
         }
         self.persist();
+    }
+
+    /// Replace the URL of a paused/failed job (e.g. when a signed link expired).
+    pub fn update_url(&self, job_id: JobId, new_url: String) -> Result<()> {
+        let trimmed = new_url.trim().to_string();
+        if !(trimmed.starts_with("http://") || trimmed.starts_with("https://")) {
+            return Err(EngineError::Network(format!("Unsupported URL: {}", trimmed)));
+        }
+        let job_arc = self
+            .queue
+            .get_job(job_id)
+            .ok_or_else(|| EngineError::JobNotFound(job_id.to_string()))?;
+        let mut job = job_arc.lock();
+        if job.state.is_active() {
+            return Err(EngineError::Network("Pause the download before changing its URL".into()));
+        }
+        job.url = trimmed;
+        job.error_message = None;
+        drop(job);
+        self.persist();
+        Ok(())
     }
 
     /// Look up a single job snapshot.

@@ -37,6 +37,7 @@ export const AddDownloadModal: React.FC<AddDownloadModalProps> = ({
   const [headers, setHeaders] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [checksum, setChecksum] = useState("");
   const [paused, setPaused] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -55,6 +56,7 @@ export const AddDownloadModal: React.FC<AddDownloadModalProps> = ({
     setHeaders("");
     setUsername("");
     setPassword("");
+    setChecksum("");
     setPaused(false);
     setError(null);
     setBusy(false);
@@ -78,6 +80,7 @@ export const AddDownloadModal: React.FC<AddDownloadModalProps> = ({
       user_agent: userAgent.trim() || undefined,
       username: username.trim() || undefined,
       password: password || undefined,
+      checksum: checksum.trim() || undefined,
       paused,
     };
     const requests: AddRequest[] = parsedUrls.map((url) => ({
@@ -238,6 +241,16 @@ export const AddDownloadModal: React.FC<AddDownloadModalProps> = ({
                   autoComplete="new-password"
                 />
               </div>
+            </div>
+            <div>
+              <label className="field-label">{t("checksumLabel")}</label>
+              <input
+                className="input-field mono"
+                value={checksum}
+                onChange={(e) => setChecksum(e.target.value)}
+                placeholder="sha256:... / md5"
+                spellCheck={false}
+              />
             </div>
             <label className="check-row">
               <input type="checkbox" checked={paused} onChange={(e) => setPaused(e.target.checked)} />

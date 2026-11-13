@@ -8,6 +8,7 @@ use crate::domain::job::DownloadJob;
 use crate::domain::segment::Segment;
 use crate::domain::state::JobState;
 use crate::protocol::probe::HttpProbeService;
+use crate::storage::checksum::{ChecksumValidator, HashAlgorithm};
 use crate::storage::positional_writer::PositionalWriter;
 use crate::storage::preallocator::DiskPreallocator;
 use crate::storage::state_repository::StateRepository;
@@ -201,8 +202,25 @@ impl DownloadCoordinator {
             return Ok(());
         }
 
-        // 6. Finalize
+        // 6. Finalize & optional checksum verification
         writer.sync()?;
+        let checksum_spec = {
+            let mut job = job_arc.lock();
+            job.state = JobState::Finalizing;
+            job.expected_checksum.clone()
+        };
+        if let Some(spec) = checksum_spec.as_deref().map(str::trim).filter(|s| !s.is_empty()) {
+            let (algo, hex) = if let Some(rest) = spec.strip_prefix("md5:") {
+                (HashAlgorithm::Md5, rest.trim())
+            } else if let Some(rest) = spec.strip_prefix("sha256:") {
+                (HashAlgorithm::Sha256, rest.trim())
+            } else if spec.len() == 32 {
+                (HashAlgorithm::Md5, spec)
+            } else {
+                (HashAlgorithm::Sha256, spec)
+            };
+            ChecksumValidator::verify_file(&target_path, hex, algo)?;
+        }
         {
             let mut job = job_arc.lock();
             job.state = JobState::Completed;

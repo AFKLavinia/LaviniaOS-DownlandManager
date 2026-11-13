@@ -53,6 +53,7 @@ export interface AddRequest {
   username?: string;
   password?: string;
   paused?: boolean;
+  checksum?: string;
 }
 
 export interface Settings {

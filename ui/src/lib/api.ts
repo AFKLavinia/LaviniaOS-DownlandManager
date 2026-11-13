@@ -23,6 +23,7 @@ export const api = {
   pauseAll: () => invoke<void>("pause_all"),
   resumeAll: () => invoke<void>("resume_all"),
   clearCompleted: () => invoke<void>("clear_completed"),
+  refreshUrl: (id: string, url: string) => invoke<void>("refresh_url", { id, url }),
   openFile: (id: string) => invoke<void>("open_file", { id }),
   openFolder: (id?: string) => invoke<void>("open_folder", { id: id ?? null }),
   pickFolder: () => invoke<string | null>("pick_folder"),

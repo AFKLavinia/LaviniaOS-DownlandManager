@@ -291,6 +291,16 @@ const Shell: React.FC = () => {
         onClick: () => void navigator.clipboard.writeText(job.url).catch(() => undefined),
         separatorBefore: true,
       },
+      {
+        label: t("ctxRefreshUrl"),
+        onClick: () => {
+          const next = window.prompt(t("ctxRefreshUrl"), job.url);
+          if (next && next.trim() && next.trim() !== job.url) {
+            run(() => api.refreshUrl(jobIdOf(job), next.trim()));
+          }
+        },
+        disabled: done || running,
+      },
       { label: t("remove"), onClick: () => setRemoveTarget(job), danger: true, separatorBefore: true },
     ];
   };
