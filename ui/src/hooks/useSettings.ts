@@ -16,6 +16,8 @@ export const DEFAULT_SETTINGS: Settings = {
   theme: "amoled",
   api_port: 4141,
   api_token: "",
+  autostart: false,
+  on_complete_action: "none",
 };
 
 const THEME_CACHE_KEY = "lodm-theme";

@@ -70,6 +70,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       language: draft.language,
       theme: draft.theme,
       api_port: draft.api_port,
+      autostart: draft.autostart,
+      on_complete_action: draft.on_complete_action,
     });
     if (err) setError(err);
     else onClose();
@@ -166,6 +168,21 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         {check("clipboard_watch", t("setClipboard"))}
         {check("close_to_tray", t("setTray"))}
         {check("notifications", t("setNotifications"))}
+        {check("autostart", t("setAutostart"))}
+        <div>
+          <label className="field-label">{t("setOnComplete")}</label>
+          <select
+            className="input-field"
+            value={draft.on_complete_action}
+            onChange={(e) =>
+              set("on_complete_action", e.target.value as Settings["on_complete_action"])
+            }
+          >
+            <option value="none">{t("onCompleteNone")}</option>
+            <option value="sleep">{t("onCompleteSleep")}</option>
+            <option value="shutdown">{t("onCompleteShutdown")}</option>
+          </select>
+        </div>
 
         <div className="settings-section">{t("setAppearance")}</div>
         <div className="form-row">

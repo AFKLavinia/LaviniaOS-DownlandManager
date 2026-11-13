@@ -70,6 +70,8 @@ export interface Settings {
   theme: "amoled" | "light";
   api_port: number;
   api_token: string;
+  autostart: boolean;
+  on_complete_action: "none" | "sleep" | "shutdown";
 }
 
 export interface Notice {

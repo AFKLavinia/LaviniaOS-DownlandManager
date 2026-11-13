@@ -256,6 +256,7 @@ fn save_settings(state: Shared, mut new_settings: Settings) -> Result<SaveResult
 
     state.api.set_speed_limit(new_settings.speed_limit_bytes());
     state.api.set_max_concurrent(new_settings.max_concurrent);
+    apply_autostart(new_settings.autostart);
     new_settings
         .save(&state.settings_path)
         .map_err(|e| e.to_string())?;
@@ -265,6 +266,43 @@ fn save_settings(state: Shared, mut new_settings: Settings) -> Result<SaveResult
         settings: new_settings,
         restart_required,
     })
+}
+
+fn apply_autostart(enabled: bool) {
+    #[cfg(target_os = "windows")]
+    {
+        let key = r"HKCU\Software\Microsoft\Windows\CurrentVersion\Run";
+        if enabled {
+            if let Ok(exe) = std::env::current_exe() {
+                let _ = std::process::Command::new("reg")
+                    .args(["add", key, "/v", "LODM", "/t", "REG_SZ", "/d", &format!("\"{}\"", exe.display()), "/f"])
+                    .output();
+            }
+        } else {
+            let _ = std::process::Command::new("reg")
+                .args(["delete", key, "/v", "LODM", "/f"])
+                .output();
+        }
+    }
+    #[cfg(not(target_os = "windows"))]
+    let _ = enabled;
+}
+
+fn trigger_on_complete_action(action: &str) {
+    #[cfg(target_os = "windows")]
+    match action {
+        "shutdown" => {
+            let _ = std::process::Command::new("shutdown").args(["/s", "/t", "30"]).spawn();
+        }
+        "sleep" => {
+            let _ = std::process::Command::new("rundll32.exe")
+                .args(["powrprof.dll,SetSuspendState", "0,1,0"])
+                .spawn();
+        }
+        _ => {}
+    }
+    #[cfg(not(target_os = "windows"))]
+    let _ = action;
 }
 
 /// Connection info for the browser extension (shown in Settings).
@@ -413,6 +451,13 @@ fn spawn_notifier(app: AppHandle, state: Arc<AppState>) {
                     .title(format!("LODM — {}", notice.title))
                     .body(&notice.body)
                     .show();
+            }
+            if notice.kind == "completed" {
+                let any_active = state.api.list_downloads().iter().any(|j| j.state.is_active());
+                if !any_active {
+                    let action = state.settings.lock().on_complete_action.clone();
+                    trigger_on_complete_action(&action);
+                }
             }
         }
     });

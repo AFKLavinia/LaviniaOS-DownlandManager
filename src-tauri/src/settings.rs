@@ -23,6 +23,9 @@ pub struct Settings {
     pub theme: String,
     pub api_port: u16,
     pub api_token: String,
+    pub autostart: bool,
+    /// "none" | "sleep" | "shutdown"
+    pub on_complete_action: String,
 }
 
 impl Default for Settings {
@@ -41,6 +44,8 @@ impl Default for Settings {
             theme: "amoled".into(),
             api_port: 4141,
             api_token: String::new(),
+            autostart: false,
+            on_complete_action: "none".into(),
         }
     }
 }
@@ -79,6 +84,9 @@ impl Settings {
         }
         if self.api_port == 0 {
             self.api_port = 4141;
+        }
+        if !matches!(self.on_complete_action.as_str(), "none" | "sleep" | "shutdown") {
+            self.on_complete_action = "none".into();
         }
     }
 
