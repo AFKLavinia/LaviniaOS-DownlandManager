@@ -2,6 +2,7 @@ use crate::common::error::{EngineError, Result};
 use crate::common::retry::RetryPolicy;
 use crate::common::types::SegmentId;
 use crate::domain::metrics::SpeedTracker;
+use crate::domain::request_options::RequestOptions;
 use crate::domain::segment::Segment;
 use crate::domain::state::SegmentState;
 use crate::engine::rate_limiter::RateLimiter;
@@ -25,6 +26,7 @@ impl SegmentWorker {
         writer: PositionalWriter,
         rate_limiter: RateLimiter,
         cancel_token: Arc<AtomicBool>,
+        options: Arc<RequestOptions>,
         progress_callback: Arc<dyn Fn(SegmentId, u64) + Send + Sync>,
     ) -> Result<()> {
         let retry_policy = RetryPolicy::default();
@@ -51,7 +53,7 @@ impl SegmentWorker {
                 seg.state = SegmentState::Connecting;
             }
 
-            let request = client.get(&url).header(RANGE, &range_str);
+            let request = options.apply(client.get(&url).header(RANGE, &range_str));
             match request.send().await {
                 Ok(mut response) => {
                     let status = response.status();
@@ -66,6 +68,13 @@ impl SegmentWorker {
                         }
                         sleep(retry_policy.delay_for_attempt(attempt)).await;
                         continue;
+                    }
+
+                    // A 200 reply to a ranged request means the server ignored Range;
+                    // writing it at a non-zero offset would corrupt the file.
+                    if status == reqwest::StatusCode::OK && segment.lock().current_byte > 0 {
+                        segment.lock().state = SegmentState::Failed;
+                        return Err(EngineError::RangeNotSupported);
                     }
 
                     // Reset retry counter on successful connection

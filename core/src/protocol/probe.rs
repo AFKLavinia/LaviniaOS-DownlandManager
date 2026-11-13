@@ -1,5 +1,6 @@
 use crate::common::error::{EngineError, Result};
 use reqwest::header::{ACCEPT_RANGES, CONTENT_DISPOSITION, CONTENT_LENGTH, ETAG, LAST_MODIFIED, RANGE};
+use crate::domain::request_options::RequestOptions;
 use reqwest::Client;
 use std::sync::Arc;
 
@@ -23,24 +24,47 @@ impl HttpProbeService {
     }
 
     /// Perform discovery probe using HEAD, falling back to Range GET if needed.
-    pub async fn probe(&self, url: &str) -> Result<ProbeResult> {
-        let resp = self
-            .client
-            .head(url)
+    pub async fn probe(&self, url: &str, options: &RequestOptions) -> Result<ProbeResult> {
+        let mut resp = options
+            .apply(self.client.head(url))
             .send()
             .await
             .map_err(|e| EngineError::Network(e.to_string()))?;
 
+        // Many servers reject HEAD (403/405/501): fall back to a 1-byte ranged GET.
+        if !resp.status().is_success() {
+            resp = options
+                .apply(self.client.get(url).header(RANGE, "bytes=0-0"))
+                .send()
+                .await
+                .map_err(|e| EngineError::Network(e.to_string()))?;
+            if !resp.status().is_success() {
+                return Err(EngineError::HttpStatus {
+                    status_code: resp.status().as_u16(),
+                    message: "Probe request rejected".to_string(),
+                });
+            }
+        }
+
+        let status = resp.status();
         let headers = resp.headers();
 
-        // 1. Content-Length
-        let total_bytes = headers
-            .get(CONTENT_LENGTH)
-            .and_then(|val| val.to_str().ok())
-            .and_then(|val| val.parse::<u64>().ok());
+        // 1. Total size: Content-Range (206) or Content-Length
+        let total_bytes = if status == reqwest::StatusCode::PARTIAL_CONTENT {
+            headers
+                .get(reqwest::header::CONTENT_RANGE)
+                .and_then(|v| v.to_str().ok())
+                .and_then(|v| v.rsplit('/').next())
+                .and_then(|v| v.parse::<u64>().ok())
+        } else {
+            headers
+                .get(CONTENT_LENGTH)
+                .and_then(|val| val.to_str().ok())
+                .and_then(|val| val.parse::<u64>().ok())
+        };
 
         // 2. Accept-Ranges
-        let mut supports_range = headers
+        let mut supports_range = status == reqwest::StatusCode::PARTIAL_CONTENT || headers
             .get(ACCEPT_RANGES)
             .and_then(|val| val.to_str().ok())
             .map(|val| val.eq_ignore_ascii_case("bytes"))
@@ -66,10 +90,8 @@ impl HttpProbeService {
 
         // If HEAD didn't explicitly say "bytes", verify with Range: bytes=0-0 GET test
         if !supports_range && total_bytes.is_some() {
-            let test_range = self
-                .client
-                .get(url)
-                .header(RANGE, "bytes=0-0")
+            let test_range = options
+                .apply(self.client.get(url).header(RANGE, "bytes=0-0"))
                 .send()
                 .await;
 

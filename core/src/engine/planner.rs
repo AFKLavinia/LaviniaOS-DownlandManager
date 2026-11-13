@@ -35,3 +35,36 @@ impl SegmentPlanner {
         segments
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn covers_whole_file_without_gaps() {
+        let total = 10 * 1024 * 1024 + 7;
+        let segs = SegmentPlanner::plan(Some(total), 4, true);
+        assert_eq!(segs.len(), 4);
+        assert_eq!(segs[0].start_byte, 0);
+        assert_eq!(segs.last().unwrap().end_byte, total - 1);
+        for w in segs.windows(2) {
+            assert_eq!(w[0].end_byte + 1, w[1].start_byte);
+        }
+    }
+
+    #[test]
+    fn single_segment_without_range_support() {
+        let segs = SegmentPlanner::plan(Some(50_000_000), 8, false);
+        assert_eq!(segs.len(), 1);
+    }
+
+    #[test]
+    fn small_files_use_fewer_threads() {
+        assert_eq!(SegmentPlanner::plan(Some(1_500_000), 8, true).len(), 1);
+    }
+
+    #[test]
+    fn unknown_size_is_single_open_segment() {
+        assert_eq!(SegmentPlanner::plan(None, 8, true).len(), 1);
+    }
+}

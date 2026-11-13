@@ -4,100 +4,91 @@ import { StatusBadge } from "../common/StatusBadge";
 import { SegmentProgress } from "./SegmentProgress";
 import { FileIcon, NetworkSegmentsIcon } from "../../icons";
 import { formatBytes, formatSpeed, formatEta } from "../../lib/formatters";
+import { jobIdOf, jobStats } from "../../lib/jobs";
 
 interface DownloadRowProps {
   job: DownloadJob;
   isSelected: boolean;
   onSelect: (id: string) => void;
+  onActivate: (job: DownloadJob) => void;
+  onContextMenu: (job: DownloadJob, x: number, y: number) => void;
 }
 
-export const DownloadRow: React.FC<DownloadRowProps> = ({
-  job,
-  isSelected,
-  onSelect,
-}) => {
-  const jobIdStr = typeof job.id === "object" ? job.id[0] : job.id;
+export const DownloadRow: React.FC<DownloadRowProps> = React.memo(
+  ({ job, isSelected, onSelect, onActivate, onContextMenu }) => {
+    const id = jobIdOf(job);
+    const stats = jobStats(job);
+    const running = job.state === "downloading";
 
-  // Calculate sum of speed across active segments
-  const currentSpeed = job.segments.reduce((acc, s) => {
-    const spd = typeof s.speed === "object" ? s.speed[0] : s.speed;
-    return acc + (spd || 0);
-  }, 0);
+    return (
+      <tr
+        className={`download-row ${isSelected ? "selected" : ""}`}
+        onClick={() => onSelect(id)}
+        onDoubleClick={() => onActivate(job)}
+        onContextMenu={(e) => {
+          e.preventDefault();
+          onSelect(id);
+          onContextMenu(job, e.clientX, e.clientY);
+        }}
+      >
+        <td style={{ minWidth: "200px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <FileIcon size={15} />
+            <div style={{ display: "flex", flexDirection: "column", minWidth: 0 }}>
+              <span className="cell-name" title={job.filename}>
+                {job.filename}
+              </span>
+              {job.state === "failed" && job.error_message && (
+                <span className="cell-error" title={job.error_message}>
+                  {job.error_message}
+                </span>
+              )}
+            </div>
+          </div>
+        </td>
 
-  // Calculate downloaded bytes
-  const downloadedBytes = job.segments.reduce((acc, s) => {
-    return acc + Math.max(0, s.current_byte - s.start_byte);
-  }, 0);
+        <td className="mono" style={{ width: "76px" }}>
+          {formatBytes(job.total_bytes)}
+        </td>
 
-  const total = job.total_bytes || 0;
-  const percentage = total > 0 ? (downloadedBytes / total) * 100 : 0;
-  const remainingBytes = Math.max(0, total - downloadedBytes);
-  const etaSeconds = currentSpeed > 0 ? remainingBytes / currentSpeed : null;
+        <td style={{ width: "104px" }}>
+          <StatusBadge state={job.state} />
+        </td>
 
-  const completedSegmentsCount = job.segments.filter((s) => s.state === "completed").length;
+        <td style={{ minWidth: "150px" }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
+            <SegmentProgress
+              segments={job.segments}
+              totalBytes={job.total_bytes}
+              percentage={stats.percentage}
+            />
+            <div className="cell-sub">
+              <span>{stats.percentage.toFixed(1)}%</span>
+              <span>
+                {formatBytes(stats.downloaded)} / {formatBytes(job.total_bytes)}
+              </span>
+            </div>
+          </div>
+        </td>
 
-  return (
-    <tr
-      className={`download-row ${isSelected ? "selected" : ""}`}
-      onClick={() => onSelect(jobIdStr)}
-    >
-      <td style={{ minWidth: "220px" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          <FileIcon size={16} className="text-secondary" />
-          <span style={{ fontWeight: 500, color: "var(--text-primary)" }}>
-            {job.filename}
-          </span>
-        </div>
-      </td>
+        <td className="mono" style={{ width: "76px" }}>
+          {running ? formatSpeed(stats.speed) : "--"}
+        </td>
 
-      <td style={{ width: "90px", fontFamily: "var(--font-mono)" }}>
-        {formatBytes(job.total_bytes)}
-      </td>
+        <td className="mono" style={{ width: "62px" }}>
+          {running ? formatEta(stats.etaSeconds) : "--"}
+        </td>
 
-      <td style={{ width: "110px" }}>
-        <StatusBadge state={job.state} />
-      </td>
-
-      <td style={{ minWidth: "160px" }}>
-        <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-          <SegmentProgress
-            segments={job.segments}
-            totalBytes={job.total_bytes}
-            percentage={percentage}
-          />
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              fontSize: "10px",
-              fontFamily: "var(--font-mono)",
-              color: "var(--text-muted)",
-            }}
-          >
-            <span>{percentage.toFixed(1)}%</span>
+        <td style={{ width: "62px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "4px", fontSize: "11px" }}>
+            <NetworkSegmentsIcon size={12} />
             <span>
-              {formatBytes(downloadedBytes)} / {formatBytes(job.total_bytes)}
+              {stats.completedSegments}/{job.segments.length || job.thread_count}
             </span>
           </div>
-        </div>
-      </td>
-
-      <td style={{ width: "90px", fontFamily: "var(--font-mono)" }}>
-        {job.state === "downloading" ? formatSpeed(currentSpeed) : "--"}
-      </td>
-
-      <td style={{ width: "80px", fontFamily: "var(--font-mono)" }}>
-        {job.state === "downloading" ? formatEta(etaSeconds) : "--"}
-      </td>
-
-      <td style={{ width: "90px" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "4px", fontSize: "11px" }}>
-          <NetworkSegmentsIcon size={13} />
-          <span>
-            {completedSegmentsCount}/{job.segments.length || job.thread_count}
-          </span>
-        </div>
-      </td>
-    </tr>
-  );
-};
+        </td>
+      </tr>
+    );
+  },
+);
+DownloadRow.displayName = "DownloadRow";

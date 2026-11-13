@@ -8,6 +8,7 @@ import {
   FolderIcon,
   SearchIcon,
 } from "../../icons";
+import { useT } from "../../lib/I18nContext";
 
 interface ToolbarProps {
   onAddNew: () => void;
@@ -18,6 +19,7 @@ interface ToolbarProps {
   selectedId: string | null;
   searchQuery: string;
   onSearchChange: (q: string) => void;
+  searchRef?: React.Ref<HTMLInputElement>;
 }
 
 export const Toolbar: React.FC<ToolbarProps> = ({
@@ -29,65 +31,63 @@ export const Toolbar: React.FC<ToolbarProps> = ({
   selectedId,
   searchQuery,
   onSearchChange,
+  searchRef,
 }) => {
+  const t = useT();
   const hasSelection = selectedId !== null;
 
   return (
     <div className="app-toolbar">
       <div className="toolbar-group">
-        <Button variant="primary" icon={<AddIcon size={14} />} onClick={onAddNew}>
-          Yeni İndirme
+        <Button variant="primary" icon={<AddIcon size={13} />} onClick={onAddNew} title="Ctrl+N">
+          {t("addNew")}
         </Button>
-
         <Button
-          icon={<PlayIcon size={14} />}
+          icon={<PlayIcon size={13} />}
           onClick={onResume}
           disabled={!hasSelection}
-          title="Seçili indirmeyi başlat veya devam ettir"
+          title={t("resumeTip")}
         >
-          Devam Et
+          {t("resume")}
         </Button>
-
         <Button
-          icon={<PauseIcon size={14} />}
+          icon={<PauseIcon size={13} />}
           onClick={onPause}
           disabled={!hasSelection}
-          title="Seçili indirmeyi duraklat"
+          title={t("pauseTip")}
         >
-          Duraklat
+          {t("pause")}
         </Button>
-
         <Button
-          icon={<TrashIcon size={14} />}
+          icon={<TrashIcon size={13} />}
           onClick={onDelete}
           disabled={!hasSelection}
-          title="Seçili görevi kaldır"
+          title={`${t("removeTip")} (Del)`}
         >
-          Kaldır
+          {t("remove")}
         </Button>
-
         <Button
-          icon={<FolderIcon size={14} />}
+          icon={<FolderIcon size={13} />}
           onClick={onOpenFolder}
-          disabled={!hasSelection}
-          title="Dosya dizinini aç"
+          title={t("openFolderTip")}
         >
-          Klasörü Aç
+          {t("openFolder")}
         </Button>
       </div>
 
       <div className="toolbar-group">
-        <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
-          <span style={{ position: "absolute", left: "8px", color: "var(--text-muted)" }}>
-            <SearchIcon size={14} />
+        <div className="search-box">
+          <span className="search-icon">
+            <SearchIcon size={13} />
           </span>
           <input
+            ref={searchRef}
             type="text"
-            className="input-field"
-            placeholder="İndirmelerde ara..."
+            className="input-field search-input"
+            placeholder={t("search")}
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
-            style={{ paddingLeft: "28px", width: "180px", height: "28px" }}
+            title="Ctrl+F"
           />
         </div>
       </div>

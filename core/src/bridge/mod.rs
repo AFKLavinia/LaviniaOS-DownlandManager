@@ -1,5 +1,6 @@
 pub mod commands;
 pub mod server;
 
-pub use commands::DownloadManagerApi;
+pub use commands::{ApiConfig, DownloadManagerApi, NewDownload};
 pub use server::LocalApiServer;
+

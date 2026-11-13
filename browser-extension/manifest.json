@@ -1,0 +1,11 @@
+{
+  "manifest_version": 3,
+  "name": "LODM Integration",
+  "version": "0.1.0",
+  "description": "Send downloads from the browser to LODM (LaviniaOS Download Manager).",
+  "permissions": ["downloads", "contextMenus", "storage", "cookies", "notifications"],
+  "host_permissions": ["http://*/*", "https://*/*", "http://127.0.0.1/*"],
+  "background": { "service_worker": "background.js" },
+  "options_ui": { "page": "options.html", "open_in_tab": false },
+  "action": { "default_title": "LODM", "default_popup": "options.html" }
+}

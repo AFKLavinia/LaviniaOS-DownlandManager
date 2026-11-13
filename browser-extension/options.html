@@ -1,0 +1,30 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>LODM</title>
+    <style>
+      body { font: 12px system-ui, sans-serif; width: 300px; padding: 12px; background: #000; color: #ededed; }
+      label { display: block; margin: 8px 0 3px; color: #a1a1aa; }
+      input[type="text"], input[type="number"], input[type="password"] {
+        width: 100%; box-sizing: border-box; padding: 5px 7px; background: #121212; color: #ededed;
+        border: 1px solid #3a3a3a; border-radius: 4px;
+      }
+      .row { display: flex; align-items: center; gap: 6px; margin-top: 8px; }
+      button { margin-top: 12px; padding: 5px 12px; background: #fff; color: #000; border: 0; border-radius: 4px; cursor: pointer; }
+      #status { margin-left: 8px; color: #a1a1aa; }
+    </style>
+  </head>
+  <body>
+    <strong>LODM</strong>
+    <label for="port">Port</label>
+    <input id="port" type="number" min="1" max="65535" />
+    <label for="token">Key (LODM &gt; Settings &gt; Browser extension)</label>
+    <input id="token" type="password" autocomplete="off" />
+    <div class="row"><input id="capture" type="checkbox" /><label for="capture" style="margin:0">Capture browser downloads</label></div>
+    <label for="minsize">Ignore files smaller than (MB, 0 = capture all)</label>
+    <input id="minsize" type="number" min="0" />
+    <button id="save">Save</button><span id="status"></span>
+    <script src="options.js"></script>
+  </body>
+</html>

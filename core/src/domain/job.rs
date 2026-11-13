@@ -1,3 +1,4 @@
+use super::request_options::RequestOptions;
 use super::segment::Segment;
 use super::state::JobState;
 use crate::common::types::JobId;
@@ -19,6 +20,17 @@ pub struct DownloadJob {
     pub segments: Vec<Segment>,
     pub thread_count: u32,
     pub error_message: Option<String>,
+    #[serde(default)]
+    pub options: RequestOptions,
+    /// Unix seconds when the job was created.
+    #[serde(default)]
+    pub created_at: u64,
+    /// True when the user explicitly chose the filename (probe must not override it).
+    #[serde(default)]
+    pub name_locked: bool,
+    /// Put the file into a category subfolder (Video, Documents, ...) on first start.
+    #[serde(default)]
+    pub categorize: bool,
 }
 
 impl DownloadJob {
@@ -41,6 +53,13 @@ impl DownloadJob {
             segments: Vec::new(),
             thread_count: thread_count.max(1),
             error_message: None,
+            options: RequestOptions::default(),
+            created_at: std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.as_secs())
+                .unwrap_or(0),
+            name_locked: false,
+            categorize: false,
         }
     }
 

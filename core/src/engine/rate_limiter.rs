@@ -47,7 +47,9 @@ impl RateLimiter {
                 state.last_update = now;
 
                 // Add newly earned tokens based on elapsed time
-                state.tokens = (state.tokens + elapsed * limit_bps).min(limit_bps * 2.0);
+                // Cap must always fit one chunk, otherwise tiny limits would wait forever.
+                let cap = (limit_bps * 2.0).max(bytes_count as f64);
+                state.tokens = (state.tokens + elapsed * limit_bps).min(cap);
 
                 if state.tokens >= bytes_count as f64 {
                     state.tokens -= bytes_count as f64;
@@ -67,5 +69,30 @@ impl RateLimiter {
 impl Default for RateLimiter {
     fn default() -> Self {
         Self::new(None)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::time::Duration;
+
+    #[tokio::test]
+    async fn unlimited_returns_immediately() {
+        let rl = RateLimiter::new(None);
+        let t = Instant::now();
+        rl.consume(10_000_000).await;
+        assert!(t.elapsed() < Duration::from_millis(50));
+    }
+
+    #[tokio::test]
+    async fn tiny_limit_with_large_chunk_terminates() {
+        let rl = RateLimiter::new(Some(100_000));
+        let t = Instant::now();
+        // chunk (150 KB) > 1x limit; must not hang
+        tokio::time::timeout(Duration::from_secs(5), rl.consume(150_000))
+            .await
+            .expect("consume should finish");
+        assert!(t.elapsed() < Duration::from_secs(5));
     }
 }

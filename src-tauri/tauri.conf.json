@@ -12,17 +12,31 @@
   "app": {
     "windows": [
       {
-        "title": "LODM — LaviniaOS Download Manager",
+        "label": "main",
+        "title": "LODM - LaviniaOS Download Manager",
         "width": 820,
         "height": 480,
         "minWidth": 720,
         "minHeight": 380,
         "resizable": true,
-        "decorations": false
+        "decorations": false,
+        "dragDropEnabled": false
       }
     ],
     "security": {
       "csp": null
     }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["nsis"],
+    "shortDescription": "LaviniaOS Download Manager",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ]
   }
 }

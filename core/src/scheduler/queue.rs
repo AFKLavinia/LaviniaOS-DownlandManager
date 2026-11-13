@@ -3,12 +3,12 @@ use crate::domain::job::DownloadJob;
 use crate::domain::state::JobState;
 use parking_lot::Mutex;
 use std::collections::{HashMap, VecDeque};
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use std::sync::Arc;
 
 /// Priority queue managing active concurrent downloads and queued backlog.
 pub struct DownloadQueue {
-    max_concurrent: usize,
+    max_concurrent: AtomicUsize,
     jobs: Arc<Mutex<HashMap<JobId, Arc<Mutex<DownloadJob>>>>>,
     queued_order: Arc<Mutex<VecDeque<JobId>>>,
     active_cancel_tokens: Arc<Mutex<HashMap<JobId, Arc<AtomicBool>>>>,
@@ -17,7 +17,7 @@ pub struct DownloadQueue {
 impl DownloadQueue {
     pub fn new(max_concurrent: usize) -> Self {
         Self {
-            max_concurrent: max_concurrent.max(1),
+            max_concurrent: AtomicUsize::new(max_concurrent.max(1)),
             jobs: Arc::new(Mutex::new(HashMap::new())),
             queued_order: Arc::new(Mutex::new(VecDeque::new())),
             active_cancel_tokens: Arc::new(Mutex::new(HashMap::new())),
@@ -25,7 +25,37 @@ impl DownloadQueue {
     }
 
     pub fn max_concurrent(&self) -> usize {
-        self.max_concurrent
+        self.max_concurrent.load(Ordering::Relaxed)
+    }
+
+    pub fn set_max_concurrent(&self, n: usize) {
+        self.max_concurrent.store(n.max(1), Ordering::Relaxed);
+    }
+
+    pub fn active_count(&self) -> usize {
+        self.active_cancel_tokens.lock().len()
+    }
+
+    pub fn is_active(&self, id: JobId) -> bool {
+        self.active_cancel_tokens.lock().contains_key(&id)
+    }
+
+    /// Mark a job as waiting for a free download slot.
+    pub fn push_waiting(&self, id: JobId) {
+        let mut q = self.queued_order.lock();
+        if !q.contains(&id) {
+            q.push_back(id);
+        }
+    }
+
+    /// Next job waiting for a slot (FIFO).
+    pub fn pop_waiting(&self) -> Option<JobId> {
+        self.queued_order.lock().pop_front()
+    }
+
+    /// Insert an already existing job (restored from disk) without scheduling it.
+    pub fn insert_restored(&self, job: DownloadJob) {
+        self.jobs.lock().insert(job.id, Arc::new(Mutex::new(job)));
     }
 
     /// Add a new download job to the queue.
@@ -33,7 +63,6 @@ impl DownloadQueue {
         let id = job.id;
         let job_arc = Arc::new(Mutex::new(job));
         self.jobs.lock().insert(id, job_arc);
-        self.queued_order.lock().push_back(id);
         id
     }
 
@@ -44,14 +73,22 @@ impl DownloadQueue {
 
     /// Get all jobs snapshot.
     pub fn list_jobs(&self) -> Vec<DownloadJob> {
-        self.jobs
+        let mut jobs: Vec<DownloadJob> = self
+            .jobs
             .lock()
             .values()
             .map(|j| j.lock().clone())
-            .collect()
+            .collect();
+        // Stable order (HashMap iteration is random): oldest first.
+        jobs.sort_by(|a, b| {
+            a.created_at
+                .cmp(&b.created_at)
+                .then_with(|| a.id.0.cmp(&b.id.0))
+        });
+        jobs
     }
 
-    /// Pause an actively downloading job.
+    /// Pause an actively downloading job (or take a waiting job out of the line).
     pub fn pause_job(&self, id: JobId) -> bool {
         if let Some(token) = self.active_cancel_tokens.lock().get(&id) {
             token.store(true, Ordering::Relaxed);
@@ -60,7 +97,18 @@ impl DownloadQueue {
             }
             return true;
         }
-        false
+        let was_waiting = {
+            let mut q = self.queued_order.lock();
+            let before = q.len();
+            q.retain(|&j| j != id);
+            q.len() != before
+        };
+        if was_waiting {
+            if let Some(job) = self.get_job(id) {
+                job.lock().state = JobState::Paused;
+            }
+        }
+        was_waiting
     }
 
     /// Register a cancel token for an active job.

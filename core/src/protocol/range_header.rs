@@ -17,3 +17,14 @@ impl RangeHeader {
         Self::format(segment.current_byte, Some(segment.end_byte))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn formats_ranges() {
+        assert_eq!(RangeHeader::format(0, Some(99)), "bytes=0-99");
+        assert_eq!(RangeHeader::format(100, None), "bytes=100-");
+    }
+}
